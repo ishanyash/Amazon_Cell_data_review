@@ -1,0 +1,192 @@
+---
+title: "Text_Analytics_test_IY"
+author: "Ishan Yash"
+date: "13/02/2022"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(textstem)
+library(patchwork)
+library(ggplot2)
+library(wordcloud)
+library(tidytext)
+library(qdap)
+library(tm)
+library(ngramr)
+library(stringr)
+library(dplyr)
+```
+
+**Importing the dataset**
+
+```{r}
+r_ds <- read.csv("Review_data")
+m_ds <- read.csv("Meta_data")
+```
+
+```{r}
+head(r_ds)
+```
+```{r}
+head(m_ds)
+```
+
+
+```{r}
+df = merge(x=r_ds,y=m_ds,by="asin",all.x=TRUE)
+head(df)
+```
+```{r}
+length(unique(df$asin)) ==length(unique(r_ds$asin))
+```
+
+**Data Description**
+
+```{r}
+summary(df)
+```
+
+```{r}
+df$overall <- as.factor(df$overall)
+str(df)
+```
+
+```{r}
+df %>%
+   group_by(overall) %>%
+   summarise(Freq = round(n()/length(df$overall)*100))  -> ratings.count
+```
+
+```{r}
+plt1 <- ggplot(ratings.count , aes(x = overall , y = Freq, fill = overall)) + 
+   geom_bar(stat = "identity") +
+   labs(x = "Overall Rating") + 
+   geom_text(aes(label = Freq), vjust = -0.5)
+```
+```{r}
+#for (i in df$overall) {
+  #while (df$overall[i]<3){
+  #  df$overall[i] <- 1
+ # }
+ # while (df$overall[i]==3){
+ #   df$overall[i] <- 2
+ # }
+ # while (df$overall[i]>3){
+ #   df$overall[i] <- 3
+ # }
+#}
+#head(df)
+```
+
+
+
+
+
+**Handling Duplicates and NAs**
+
+
+```{r}
+#cleaning the reviewTime column and creating a coloumn for Day Month and Year.
+#install.packages("tidyr")
+library(tidyr)
+df %>%
+   separate(
+      reviewTime,
+      c("Month" , "Day" , "Year"),
+      " "
+   ) -> df
+
+#Removing the "," from the Day column 
+library(stringr)
+library(dplyr)
+df %>%
+   mutate(Day = str_remove_all(Day , ",")) -> df
+```
+```{r}
+summary(df)
+```
+
+
+```{r}
+df_ed <- na.omit(df)
+head(df_ed)
+```
+```{r}
+summary(df_ed)
+```
+```{r}
+str(df_ed)
+```
+
+
+
+```{r}
+df_ed %>%
+   group_by(overall) %>%
+   summarise(Freq = round(n()/length(df_ed$overall)*100)) -> ratings.count_new
+```
+
+```{r}
+plt2 <- ggplot(ratings.count_new , aes(x = overall , y = Freq, fill = overall)) + 
+   geom_bar(stat = "identity") +
+   labs(x = "Overall Rating After ommision") + 
+   geom_text(aes(label = Freq), vjust = -0.5)
+```
+
+```{r}
+print(plt1+plt2)
+```
+
+```{r}
+
+```
+
+
+**Helpfulness Ratio**
+
+```{r}
+df %>%
+   separate(
+      helpful,
+      c("numerator.helpful","denominator.helpful"), #have to re edit this and name properly
+      " "
+   ) -> df
+```
+```{r}
+#df$numerator.helpful <- as.numeric(df$numerator.helpful)
+```
+
+
+
+```{r}
+df %>%
+   mutate(numerator.helpful = str_remove(Day , ",")) -> df
+df %>%
+   mutate(denominator.helpful = str_remove(Day , "]")) -> df
+```
+```{r}
+str(df)
+```
+
+```{r}
+df$numerator.helpful <- as.numeric(df$numerator.helpful)
+df$denominator.helpful <- as.numeric(df$denominator.helpful)
+df %>%
+  mutate(helpfulness_ratio = numerator.helpful/denominator.helpful) -> df
+```
+
+```{r}
+#length(unique(df$helpfulness_ratio))
+```
+
+
+
+
+**Pre Processing**
+
+
+**EDA**
+
+
